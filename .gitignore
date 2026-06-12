@@ -1,4 +1,13 @@
 .vscode/
+notes/
 
 arduino_test/
 espressif_test/
+
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+*.db

@@ -1,93 +1,147 @@
 #ifndef FIREANT_H
 #define FIREANT_H
 
-    #include <stddef.h>
-    #include <stdint.h>
-    #include <stdbool.h>
-    #include <stdio.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-    #include <string.h>
+#include "driver/uart.h"
+#include "driver/gpio.h"
+#include "esp_adc/adc_oneshot.h"
 
-    #include <esp_timer.h>
-    #include "esp_http_client.h"
-    #include "esp_wifi.h"
-    #include "esp_event.h"
-    #include "esp_netif.h"
-    #include "nvs_flash.h"
-    #include "freertos/event_groups.h"
+#define FIREANT_MAX_ID_LEN 32
+#define FIREANT_MAX_TYPE_LEN 32
+#define FIREANT_MAX_UNIT_LEN 16
+#define FIREANT_MAX_HOST_LEN 64
+#define FIREANT_MAX_PORT_LEN 8
+#define FIREANT_MAX_TOKEN_LEN 128
+#define FIREANT_MAX_WIFI_SSID_LEN 32
+#define FIREANT_MAX_WIFI_PASS_LEN 64
+#define FIREANT_MAX_IP_LEN 16
 
-    #include <driver/uart.h>
-    
-    // ==== SENSORS ====
+#define FIREANT_DEFAULT_NODE_PORT "8000"
+#define FIREANT_UART_LINE_SIZE 256
+#define FIREANT_HTTP_BUFFER_SIZE 4096
+#define FIREANT_SYNC_INTERVAL_MS 30000
+#define FIREANT_SEND_INTERVAL_MS 5000
+#define FIREANT_HTTP_FAIL_BACKOFF_MS 15000
 
-    typedef struct {
-        char *id;
-        char *type;
-        char *unit;  
-    } fireant_sensor_t;
+typedef enum {
+    FIREANT_SENSOR_ANALOG_ADC,
+    FIREANT_SENSOR_DIGITAL,
+    FIREANT_SENSOR_CUSTOM
+} fireant_sensor_kind_t;
 
-    typedef struct {
-        fireant_sensor_t *sensors;
-        size_t count;
-        size_t capacity;
-    } _fireant_sensor_vector_t;
+typedef float (*fireant_sensor_reader_t)(void *ctx);
 
-    // ==== NODE ====
-    
-    typedef struct {
-        char *id;
-        char *server_ip;
-        char *server_port;
-        char *server_token;
+typedef struct {
+    char id[FIREANT_MAX_ID_LEN];
+    char type[FIREANT_MAX_TYPE_LEN];
+    char unit[FIREANT_MAX_UNIT_LEN];
 
-        char *wifi_ssid;
-        char *wifi_password;
+    fireant_sensor_kind_t kind;
 
-        uart_port_t uart_port;
-    } fireant_config_t;
-    
-    void fireant_read_config();
+    union {
+        struct {
+            adc_channel_t channel;
+        } analog_adc;
 
-    typedef struct {
-        fireant_config_t config;
-        _fireant_sensor_vector_t sensors;
+        struct {
+            gpio_num_t pin;
+            bool active_low;
+        } digital;
 
-        bool connected;
-        int64_t last_sync;
+        struct {
+            fireant_sensor_reader_t read;
+            void *ctx;
+        } custom;
+    } input;
 
-        EventGroupHandle_t wifi_event_group;
-        int wifi_retry_count;
+    float value;
+} fireant_sensor_t;
 
-        SemaphoreHandle_t config_mutex;
+typedef struct {
+    char id[FIREANT_MAX_ID_LEN];
 
-        bool wifi_initialized;
-        bool wifi_reconnect_required;
-    } fireant_node_t;
+    char server_ip[FIREANT_MAX_HOST_LEN];
+    char server_port[FIREANT_MAX_PORT_LEN];
+    char server_token[FIREANT_MAX_TOKEN_LEN];
 
-    // ==== MISC ====
+    char wifi_ssid[FIREANT_MAX_WIFI_SSID_LEN];
+    char wifi_password[FIREANT_MAX_WIFI_PASS_LEN];
 
-    /// Initializes the node and drivers
-    void fireant_init();
+    uart_port_t console_uart;
 
-    /// Sets the configuration to the global node
-    void fireant_config(fireant_config_t config);
+    uint32_t send_interval_ms;
+    uint32_t sync_interval_ms;
+    bool enable_console;
+} fireant_config_t;
 
-    /// Adds a sensor to the sensor vector, then return it's index
-    size_t fireant_add_sensor(fireant_sensor_t sensor);
+typedef struct fireant_node fireant_node_t;
 
-    /// Removes a sensor from the sensor vector by it's index
-    bool fireant_remove_sensor(size_t sensor_index);
+void fireant_config_default(fireant_config_t *config);
 
-    void fireant_start();
-    void _fireant_send_task(void *pvParameters);
-    void _fireant_config_task(void *pvParameters);
+void fireant_global_init(const fireant_config_t *config);
+void fireant_global_start(void);
 
-    void fireant_send_data();
+size_t fireant_global_add_adc_sensor(
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel
+);
 
-    void fireant_connect_to_wifi();
+size_t fireant_global_add_digital_sensor(
+    const char *id,
+    const char *type,
+    const char *unit,
+    gpio_num_t pin,
+    bool active_low
+);
 
-    void _fireant_init_uart_driver(uart_port_t uart_port);
+size_t fireant_global_add_custom_sensor(
+    const char *id,
+    const char *type,
+    const char *unit,
+    fireant_sensor_reader_t read,
+    void *ctx
+);
 
-    void _fireant_read_line(char *buffer, size_t size);
+void fireant_global_enter_config_mode(void);
+void fireant_global_exit_config_mode(void);
+
+fireant_node_t *fireant_global_node(void);
+
+void fireant_node_init(fireant_node_t *node, const fireant_config_t *config);
+void fireant_node_start(fireant_node_t *node);
+
+size_t fireant_node_add_adc_sensor(
+    fireant_node_t *node,
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel
+);
+
+size_t fireant_node_add_digital_sensor(
+    fireant_node_t *node,
+    const char *id,
+    const char *type,
+    const char *unit,
+    gpio_num_t pin,
+    bool active_low
+);
+
+size_t fireant_node_add_custom_sensor(
+    fireant_node_t *node,
+    const char *id,
+    const char *type,
+    const char *unit,
+    fireant_sensor_reader_t read,
+    void *ctx
+);
+
+void fireant_node_enter_config_mode(fireant_node_t *node);
+void fireant_node_exit_config_mode(fireant_node_t *node);
 
 #endif
