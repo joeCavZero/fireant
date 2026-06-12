@@ -27,6 +27,10 @@
     </a>
 
     <nav class="navbar-actions">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tree">Network</a>
+        <a href="/telemetry">History</a>
+        <a href="/node_token">Node tokens</a>
         <form action="/logout" method="post">
             <button type="submit" class="button-primary">
                 Sign Out
@@ -86,7 +90,7 @@
                     <div>
                         <strong>Created At</strong>
                         <span>
-                            {{ current_user.created_at.strftime("%d/%m/%Y") }}
+                            {{ current_user.created_at.strftime("%Y-%m-%d") }}
                         </span>
                     </div>
                 </div>

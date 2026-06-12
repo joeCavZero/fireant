@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard - FIREANT</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/css/index.css') }}"
+    >
+</head>
+<body>
+<header class="navbar">
+    <a href="/" class="brand">
+        <img
+            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
+            alt="Fireant logo"
+        >
+        <div class="brand-text">
+            <strong>FIREANT</strong>
+            <span>IoT Monitoring Platform</span>
+        </div>
+    </a>
+    <nav class="navbar-actions">
+        <a href="/tree">Network</a>
+        <a href="/telemetry">History</a>
+        <a href="/node_token">Tokens</a>
+        <a href="/me">Account</a>
+        <form action="/logout" method="post">
+            <button type="submit" class="button-primary">Sign Out</button>
+        </form>
+    </nav>
+</header>
+
+<main class="dashboard">
+    <section class="dashboard-heading">
+        <div>
+            <span class="hero-badge">Dashboard</span>
+            <h1>IoT overview</h1>
+            <p>Nodes, sensors, and the latest telemetry received from your devices.</p>
+        </div>
+        <div class="dashboard-stats">
+            <article>
+                <strong>{{ nodes|length }}</strong>
+                <span>Nodes</span>
+            </article>
+            <article>
+                <strong>{{ sensors|length }}</strong>
+                <span>Sensors</span>
+            </article>
+            <article>
+                <strong>{{ telemetries|length }}</strong>
+                <span>Readings shown</span>
+            </article>
+        </div>
+    </section>
+
+    <section class="dashboard-card">
+        <div class="section-header">
+            <span>Quick filters</span>
+            <h2>Recent telemetry</h2>
+        </div>
+        {% if filter_error %}
+            <div class="auth-alert">{{ filter_error }}</div>
+        {% endif %}
+        <form action="/dashboard" method="get" class="filter-grid">
+            <label>
+                Node
+                <select name="node_id">
+                    <option value="">All nodes</option>
+                    {% for node in nodes %}
+                        <option
+                            value="{{ node.node_id }}"
+                            {% if filters.node_id == node.node_id %}selected{% endif %}
+                        >
+                            {{ node.node_id }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Sensor
+                <select name="sensor_id">
+                    <option value="">All sensors</option>
+                    {% for sensor in sensors %}
+                        <option
+                            value="{{ sensor.sensor_id }}"
+                            {% if filters.sensor_id == sensor.sensor_id %}selected{% endif %}
+                        >
+                            {{ sensor.node.node_id }} / {{ sensor.sensor_id }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Type
+                <select name="sensor_type">
+                    <option value="">All types</option>
+                    {% for type in sensor_types %}
+                        <option
+                            value="{{ type }}"
+                            {% if filters.sensor_type == type %}selected{% endif %}
+                        >
+                            {{ type }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Start
+                <input type="datetime-local" name="start" value="{{ filters.start }}">
+            </label>
+            <label>
+                End
+                <input type="datetime-local" name="end" value="{{ filters.end }}">
+            </label>
+            <label>
+                Limit
+                <input
+                    type="number"
+                    name="limit"
+                    min="1"
+                    max="500"
+                    value="{{ filters.limit }}"
+                >
+            </label>
+            <div class="filter-actions">
+                <button type="submit" class="button-primary">Apply</button>
+                <a href="/dashboard">Clear</a>
+                <a href="/telemetry">Open full history</a>
+            </div>
+        </form>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Node</th>
+                        <th>Sensor</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Unit</th>
+                        <th>Received at</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for telemetry in telemetries %}
+                        <tr>
+                            <td>{{ telemetry.sensor.node.node_id }}</td>
+                            <td>{{ telemetry.sensor.sensor_id }}</td>
+                            <td>{{ telemetry.sensor.type }}</td>
+                            <td>{{ telemetry.value }}</td>
+                            <td>{{ telemetry.sensor.unit }}</td>
+                            <td>
+                                {{ telemetry.created_at.strftime("%Y-%m-%d %H:%M:%S") }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                No readings found.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="inventory-grid">
+        <article class="dashboard-card">
+            <div class="section-header">
+                <span>Inventory</span>
+                <h2>Nodes</h2>
+            </div>
+            <div class="inventory-list">
+                {% for node in nodes %}
+                    <div>
+                        <strong>{{ node.node_id }}</strong>
+                        <span>{{ node.ip }}:{{ node.port }}</span>
+                        <small>{{ node.sensors|length }} sensor(s)</small>
+                    </div>
+                {% else %}
+                    <p class="empty-state">No synchronized nodes.</p>
+                {% endfor %}
+            </div>
+        </article>
+
+        <article class="dashboard-card">
+            <div class="section-header">
+                <span>Inventory</span>
+                <h2>Sensors</h2>
+            </div>
+            <div class="inventory-list">
+                {% for sensor in sensors %}
+                    <div>
+                        <strong>{{ sensor.sensor_id }}</strong>
+                        <span>{{ sensor.type }} ({{ sensor.unit }})</span>
+                        <small>{{ sensor.node.node_id }}</small>
+                    </div>
+                {% else %}
+                    <p class="empty-state">No synchronized sensors.</p>
+                {% endfor %}
+            </div>
+        </article>
+    </section>
+</main>
+</body>
+</html>

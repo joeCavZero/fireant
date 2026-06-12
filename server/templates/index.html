@@ -28,7 +28,7 @@
 
     <nav class="navbar-actions">
         {% if current_user %}
-            <a href="/me" class="button-primary">Dashboard</a>
+            <a href="/dashboard" class="button-primary">Dashboard</a>
         {% else %}
             <a href="/login" class="button-primary">Login</a>
         {% endif %}
@@ -57,7 +57,7 @@
 
             <div class="hero-actions">
                 {% if current_user %}
-                    <a href="/me" class="button-primary button-large">
+                    <a href="/dashboard" class="button-primary button-large">
                         Open Dashboard
                     </a>
                 {% else %}

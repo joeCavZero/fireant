@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Device Tokens - FIREANT</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/css/index.css') }}"
+    >
+</head>
+<body>
+<header class="navbar">
+    <a href="/" class="brand">
+        <img
+            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
+            alt="Fireant logo"
+        >
+        <div class="brand-text">
+            <strong>FIREANT</strong>
+            <span>IoT Monitoring Platform</span>
+        </div>
+    </a>
+    <nav class="navbar-actions">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tree">Network</a>
+        <a href="/telemetry">History</a>
+        <a href="/me">Account</a>
+        <form action="/logout" method="post">
+            <button type="submit" class="button-primary">Sign Out</button>
+        </form>
+    </nav>
+</header>
+
+<main class="dashboard">
+    <section class="dashboard-heading">
+        <div>
+            <span class="hero-badge">Devices</span>
+            <h1>Node tokens</h1>
+            <p>Manage the Bearer tokens used by embedded devices.</p>
+        </div>
+        <a href="/node_token/new" class="button-primary">New token</a>
+    </section>
+
+    <section class="dashboard-card">
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Token</th>
+                        <th>Status</th>
+                        <th>Nodes</th>
+                        <th>Created at</th>
+                        <th>Last used</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for node_token in node_tokens %}
+                        <tr>
+                            <td>{{ node_token.id }}</td>
+                            <td>
+                                <code class="token-value">{{ node_token.token }}</code>
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ 'active' if node_token.active else 'inactive' }}">
+                                    {{ "Active" if node_token.active else "Inactive" }}
+                                </span>
+                            </td>
+                            <td>{{ node_counts.get(node_token.token, 0) }}</td>
+                            <td>
+                                {{ node_token.created_at.strftime("%Y-%m-%d %H:%M") }}
+                            </td>
+                            <td>
+                                {% if node_token.last_used_at %}
+                                    {{ node_token.last_used_at.strftime("%Y-%m-%d %H:%M") }}
+                                {% else %}
+                                    Never
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="row-actions">
+                                    <a href="/node_token/{{ node_token.id }}/edit">
+                                        Edit
+                                    </a>
+                                    <form
+                                        action="/node_token/{{ node_token.id }}/delete"
+                                        method="post"
+                                        onsubmit="return confirm('Delete this token?');"
+                                    >
+                                        <button type="submit" class="button-danger">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                No tokens registered.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+</body>
+</html>

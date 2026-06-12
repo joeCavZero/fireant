@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>
+        {{ "Edit" if node_token else "New" }} token - FIREANT
+    </title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/css/index.css') }}"
+    >
+</head>
+<body>
+<header class="navbar">
+    <a href="/" class="brand">
+        <img
+            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
+            alt="Fireant logo"
+        >
+        <div class="brand-text">
+            <strong>FIREANT</strong>
+            <span>IoT Monitoring Platform</span>
+        </div>
+    </a>
+    <nav class="navbar-actions">
+        <a href="/node_token">Back to tokens</a>
+        <form action="/logout" method="post">
+            <button type="submit" class="button-primary">Sign Out</button>
+        </form>
+    </nav>
+</header>
+
+<main class="auth-page">
+    <section class="auth-card token-form-card">
+        <header class="auth-header">
+            <span class="hero-badge">Device</span>
+            <h1>{{ "Edit token" if node_token else "New token" }}</h1>
+            <p>
+                The device must send this value in the
+                <code>Authorization: Bearer &lt;token&gt;</code>.
+            </p>
+        </header>
+
+        {% if error %}
+            <div class="auth-alert">{{ error }}</div>
+        {% endif %}
+
+        <form
+            action="{{ '/node_token/' ~ node_token.id if node_token else '/node_token' }}"
+            method="post"
+            class="auth-form"
+        >
+            <label>
+                Token
+                <input
+                    type="text"
+                    name="token"
+                    minlength="1"
+                    maxlength="255"
+                    value="{{ token_value }}"
+                    autocomplete="off"
+                    required
+                >
+            </label>
+
+            <label class="checkbox-field">
+                <input
+                    type="checkbox"
+                    name="active"
+                    value="true"
+                    {% if active %}checked{% endif %}
+                >
+                Active token
+            </label>
+
+            <button type="submit" class="button-primary">
+                {{ "Save changes" if node_token else "Create token" }}
+            </button>
+        </form>
+    </section>
+</main>
+</body>
+</html>

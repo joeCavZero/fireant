@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Telemetry History - FIREANT</title>
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/css/index.css') }}"
+    >
+</head>
+<body>
+<header class="navbar">
+    <a href="/" class="brand">
+        <img
+            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
+            alt="Fireant logo"
+        >
+        <div class="brand-text">
+            <strong>FIREANT</strong>
+            <span>IoT Monitoring Platform</span>
+        </div>
+    </a>
+    <nav class="navbar-actions">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tree">Network</a>
+        <a href="/node_token">Tokens</a>
+        <a href="/me">Account</a>
+        <form action="/logout" method="post">
+            <button type="submit" class="button-primary">Sign Out</button>
+        </form>
+    </nav>
+</header>
+
+<main class="dashboard">
+    <section class="dashboard-heading">
+        <div>
+            <span class="hero-badge">Data explorer</span>
+            <h1>Telemetry history</h1>
+            <p>Explore every measurement collected by the FIREANT server.</p>
+        </div>
+    </section>
+
+    <section class="metric-grid">
+        <article>
+            <span>Matching readings</span>
+            <strong>{{ summary.total }}</strong>
+        </article>
+        <article>
+            <span>Minimum</span>
+            <strong>
+                {{ "%.3f"|format(summary.minimum) if summary.minimum is not none else "—" }}
+            </strong>
+        </article>
+        <article>
+            <span>Average</span>
+            <strong>
+                {{ "%.3f"|format(summary.average) if summary.average is not none else "—" }}
+            </strong>
+        </article>
+        <article>
+            <span>Maximum</span>
+            <strong>
+                {{ "%.3f"|format(summary.maximum) if summary.maximum is not none else "—" }}
+            </strong>
+        </article>
+    </section>
+
+    <section class="dashboard-card">
+        <div class="section-header compact-header">
+            <span>Filters</span>
+            <h2>Find measurements</h2>
+        </div>
+
+        {% if filter_error %}
+            <div class="auth-alert">{{ filter_error }}</div>
+        {% endif %}
+
+        <form action="/telemetry" method="get" class="filter-grid telemetry-filters">
+            <label>
+                Node
+                <select name="node_id">
+                    <option value="">All nodes</option>
+                    {% for node in nodes %}
+                        <option
+                            value="{{ node.node_id }}"
+                            {% if filters.node_id == node.node_id %}selected{% endif %}
+                        >
+                            {{ node.node_id }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Sensor
+                <select name="sensor_id">
+                    <option value="">All sensors</option>
+                    {% for sensor in sensors %}
+                        <option
+                            value="{{ sensor.sensor_id }}"
+                            {% if filters.sensor_id == sensor.sensor_id %}selected{% endif %}
+                        >
+                            {{ sensor.node.node_id }} / {{ sensor.sensor_id }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Sensor type
+                <select name="sensor_type">
+                    <option value="">All types</option>
+                    {% for type in sensor_types %}
+                        <option
+                            value="{{ type }}"
+                            {% if filters.sensor_type == type %}selected{% endif %}
+                        >
+                            {{ type }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                Unit
+                <select name="unit">
+                    <option value="">All units</option>
+                    {% for item in units %}
+                        <option
+                            value="{{ item }}"
+                            {% if filters.unit == item %}selected{% endif %}
+                        >
+                            {{ item }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label>
+                From
+                <input type="datetime-local" name="start" value="{{ filters.start }}">
+            </label>
+            <label>
+                To
+                <input type="datetime-local" name="end" value="{{ filters.end }}">
+            </label>
+            <label>
+                Minimum value
+                <input
+                    type="number"
+                    step="any"
+                    name="min_value"
+                    value="{{ filters.min_value }}"
+                >
+            </label>
+            <label>
+                Maximum value
+                <input
+                    type="number"
+                    step="any"
+                    name="max_value"
+                    value="{{ filters.max_value }}"
+                >
+            </label>
+            <label>
+                Rows per page
+                <select name="per_page">
+                    {% for amount in [25, 50, 100, 250] %}
+                        <option
+                            value="{{ amount }}"
+                            {% if filters.per_page == amount %}selected{% endif %}
+                        >
+                            {{ amount }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <div class="filter-actions">
+                <button type="submit" class="button-primary">Apply filters</button>
+                <a href="/telemetry">Reset</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="dashboard-card">
+        <div class="table-toolbar">
+            <div>
+                <strong>Measurements</strong>
+                <span>
+                    Page {{ pagination.page }} of {{ pagination.total_pages }}
+                </span>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Node</th>
+                        <th>Sensor</th>
+                        <th>Type</th>
+                        <th>Value</th>
+                        <th>Unit</th>
+                        <th>Received at</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for telemetry in telemetries %}
+                        <tr>
+                            <td class="muted-cell">#{{ telemetry.id }}</td>
+                            <td>{{ telemetry.sensor.node.node_id }}</td>
+                            <td>{{ telemetry.sensor.sensor_id }}</td>
+                            <td>
+                                <span class="type-pill">{{ telemetry.sensor.type }}</span>
+                            </td>
+                            <td class="value-cell">{{ telemetry.value }}</td>
+                            <td>{{ telemetry.sensor.unit }}</td>
+                            <td>
+                                {{ telemetry.created_at.strftime("%Y-%m-%d %H:%M:%S") }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                No telemetry matches these filters.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <nav class="pagination">
+            {% if pagination.has_previous %}
+                <a href="/telemetry?page={{ pagination.page - 1 }}&{{ pagination.query }}">
+                    Previous
+                </a>
+            {% else %}
+                <span>Previous</span>
+            {% endif %}
+
+            <strong>{{ pagination.page }} / {{ pagination.total_pages }}</strong>
+
+            {% if pagination.has_next %}
+                <a href="/telemetry?page={{ pagination.page + 1 }}&{{ pagination.query }}">
+                    Next
+                </a>
+            {% else %}
+                <span>Next</span>
+            {% endif %}
+        </nav>
+    </section>
+</main>
+</body>
+</html>
