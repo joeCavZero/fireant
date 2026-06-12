@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Account - FIREANT</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='/css/index.css') }}"
+    >
+</head>
+
+<body>
+
+<header class="navbar">
+    <a href="/" class="brand">
+        <img
+            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
+            alt="Fireant logo"
+        >
+
+        <div class="brand-text">
+            <strong>FIREANT</strong>
+            <span>IoT Monitoring Platform</span>
+        </div>
+    </a>
+
+    <nav class="navbar-actions">
+        <form action="/logout" method="post">
+            <button type="submit" class="button-primary">
+                Sign Out
+            </button>
+        </form>
+    </nav>
+</header>
+
+<main>
+
+    <section class="hero">
+        <div class="hero-content">
+            <span class="hero-badge">
+                User Dashboard
+            </span>
+
+            <h1>
+                Welcome,<br>
+                {{ current_user.username }}
+            </h1>
+
+            <p>
+                Manage your account and access your FIREANT monitoring
+                environment.
+            </p>
+        </div>
+
+        <aside class="hero-panel">
+            <div class="panel-header">
+                <div>
+                    <span class="status-dot"></span>
+                    <strong>Account Active</strong>
+                </div>
+
+                <span class="panel-status">Online</span>
+            </div>
+
+            <div class="panel-list">
+                <div class="panel-item">
+                    <div class="panel-icon">ID</div>
+                    <div>
+                        <strong>User ID</strong>
+                        <span>{{ current_user.id }}</span>
+                    </div>
+                </div>
+
+                <div class="panel-item">
+                    <div class="panel-icon">US</div>
+                    <div>
+                        <strong>Username</strong>
+                        <span>{{ current_user.username }}</span>
+                    </div>
+                </div>
+
+                <div class="panel-item">
+                    <div class="panel-icon">CA</div>
+                    <div>
+                        <strong>Created At</strong>
+                        <span>
+                            {{ current_user.created_at.strftime("%d/%m/%Y") }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </section>
+
+    <section class="features">
+        <article class="feature-card">
+            <span class="feature-number">01</span>
+
+            <h3>Nodes</h3>
+
+            <p>
+                View and manage IoT nodes connected to your FIREANT account.
+            </p>
+        </article>
+
+        <article class="feature-card">
+            <span class="feature-number">02</span>
+
+            <h3>Sensors</h3>
+
+            <p>
+                Track registered sensors and their metadata across your devices.
+            </p>
+        </article>
+
+        <article class="feature-card">
+            <span class="feature-number">03</span>
+
+            <h3>Telemetry</h3>
+
+            <p>
+                Monitor measurements and future historical data from your nodes.
+            </p>
+        </article>
+    </section>
+
+</main>
+
+</body>
+</html>
