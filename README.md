@@ -84,8 +84,7 @@ device configuration.
 
 ## Hardware Used by the Examples
 
-- ESP32-WROOM-32 (xx5r69 board), with an LDR on `ADC_CHANNEL_6`;
-- Arduino Uno, a compatible Ethernet shield or module, and an LDR on pin `A0`.
+- ESP32-WROOM-32 (xx5r69 board)
 
 Other sensors can be used as long as they are registered with an identifier,
 type, and unit. See the relevant library documentation for the input methods
