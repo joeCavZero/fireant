@@ -283,6 +283,17 @@ async def dashboard(
         .all()
     )
     sensor_types = sorted({sensor.type for sensor in sensors})
+    chart_readings = [
+        {
+            "timestamp": telemetry.created_at.isoformat(),
+            "value": telemetry.value,
+            "node": telemetry.sensor.node.node_id,
+            "sensor": telemetry.sensor.sensor_id,
+            "type": telemetry.sensor.type,
+            "unit": telemetry.sensor.unit,
+        }
+        for telemetry in reversed(telemetries)
+    ]
 
     return templater.TemplateResponse(
         request=request,
@@ -293,6 +304,7 @@ async def dashboard(
             "sensors": sensors,
             "sensor_types": sensor_types,
             "telemetries": telemetries,
+            "chart_readings": chart_readings,
             "filter_error": filter_error,
             "filters": {
                 "node_id": node_id or "",

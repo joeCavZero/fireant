@@ -61,7 +61,16 @@
                         <tr>
                             <td>{{ node_token.id }}</td>
                             <td>
-                                <code class="token-value">{{ node_token.token }}</code>
+                                <div class="token-copy">
+                                    <code class="token-value">{{ node_token.token }}</code>
+                                    <button
+                                        type="button"
+                                        class="button-copy"
+                                        aria-label="Copy token {{ node_token.id }}"
+                                    >
+                                        Copy
+                                    </button>
+                                </div>
                             </td>
                             <td>
                                 <span class="status-badge status-{{ 'active' if node_token.active else 'inactive' }}">
@@ -108,5 +117,6 @@
         </div>
     </section>
 </main>
+<script src="{{ url_for('static', path='/js/node-tokens.js') }}"></script>
 </body>
 </html>

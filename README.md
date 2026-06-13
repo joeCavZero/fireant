@@ -34,7 +34,7 @@ stored in an HTTP-only cookie.
 - separate authentication for users and devices;
 - periodic collection from multiple sensors;
 - historical storage in SQLite;
-- dashboard with filters;
+- dashboard with filters and multiple telemetry charts;
 - paginated history and statistics;
 - node and sensor topology view;
 - libraries for ESP-IDF and Arduino;

@@ -130,7 +130,86 @@
                 <a href="/telemetry">Open full history</a>
             </div>
         </form>
+    </section>
 
+    <section class="analytics-section" aria-labelledby="analytics-title">
+        <div class="analytics-heading">
+            <div class="section-header compact-header">
+                <span>Filtered analytics</span>
+                <h2 id="analytics-title">Telemetry insights</h2>
+            </div>
+            <p>
+                Every chart uses the same filters and {{ telemetries|length }}
+                reading limit shown in the table.
+            </p>
+        </div>
+
+        {% if telemetries %}
+            <div id="trend-charts" class="trend-charts"></div>
+
+            <div class="chart-grid">
+                <article class="dashboard-card chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <span>Bar chart</span>
+                            <h3>Readings by sensor</h3>
+                        </div>
+                        <small>Top sensors in the filtered result</small>
+                    </div>
+                    <div class="chart-canvas-shell chart-canvas-shell-tall">
+                        <canvas
+                            id="sensor-volume-chart"
+                            aria-label="Bar chart of readings by sensor"
+                        ></canvas>
+                    </div>
+                </article>
+
+                <article class="dashboard-card chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <span>Donut chart</span>
+                            <h3>Readings by node</h3>
+                        </div>
+                        <small>Share of the filtered telemetry</small>
+                    </div>
+                    <div class="chart-canvas-shell chart-canvas-shell-tall">
+                        <canvas
+                            id="node-share-chart"
+                            aria-label="Donut chart of readings by node"
+                        ></canvas>
+                    </div>
+                    <div id="node-share-legend" class="chart-legend"></div>
+                </article>
+            </div>
+
+            <article class="dashboard-card chart-card">
+                <div class="chart-card-header">
+                    <div>
+                        <span>Activity histogram</span>
+                        <h3>Readings over time</h3>
+                    </div>
+                    <small>Collection density across the selected period</small>
+                </div>
+                <div class="chart-canvas-shell">
+                    <canvas
+                        id="activity-chart"
+                        aria-label="Histogram of readings over time"
+                    ></canvas>
+                </div>
+            </article>
+        {% else %}
+            <div class="dashboard-card chart-empty-state">
+                <strong>No data to visualize</strong>
+                <p>Change the filters or wait for devices to submit telemetry.</p>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="dashboard-card">
+        <div class="section-header compact-header">
+            <span>Readings</span>
+            <h2>Filtered telemetry</h2>
+        </div>
         <div class="table-wrapper">
             <table>
                 <thead>
@@ -205,5 +284,11 @@
         </article>
     </section>
 </main>
+{% if telemetries %}
+    <script id="dashboard-chart-data" type="application/json">
+        {{ chart_readings | tojson }}
+    </script>
+    <script src="{{ url_for('static', path='/js/dashboard.js') }}"></script>
+{% endif %}
 </body>
 </html>
