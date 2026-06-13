@@ -56,6 +56,38 @@ struct fireant_node {
 
 static fireant_node_t g_node;
 
+
+static void console_uart_init(uart_port_t uart) {
+    uart_config_t cfg = {
+        .baud_rate = 115200,
+        .data_bits = UART_DATA_8_BITS,
+        .parity = UART_PARITY_DISABLE,
+        .stop_bits = UART_STOP_BITS_1,
+        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        .source_clk = UART_SCLK_DEFAULT,
+    };
+
+    uart_driver_delete(uart);
+
+    ESP_ERROR_CHECK(uart_param_config(uart, &cfg));
+    ESP_ERROR_CHECK(uart_set_pin(
+        uart,
+        UART_PIN_NO_CHANGE,
+        UART_PIN_NO_CHANGE,
+        UART_PIN_NO_CHANGE,
+        UART_PIN_NO_CHANGE
+    ));
+
+    ESP_ERROR_CHECK(uart_driver_install(
+        uart,
+        FIREANT_UART_LINE_SIZE * 4,
+        0,
+        0,
+        NULL,
+        0
+    ));
+}
+
 static int64_t now_ms(void) {
     return esp_timer_get_time() / 1000;
 }
@@ -71,9 +103,118 @@ void fireant_config_default(fireant_config_t *config) {
     memset(config, 0, sizeof(*config));
     copy_text(config->server_port, sizeof(config->server_port), "8000");
     config->console_uart = UART_NUM_0;
-    config->send_interval_ms = FIREANT_SEND_INTERVAL_MS;
-    config->sync_interval_ms = FIREANT_SYNC_INTERVAL_MS;
+    config->send_interval_ms = FIREANT_DEFAULT_SEND_INTERVAL_MS;
+    config->sync_interval_ms = FIREANT_DEFAULT_SYNC_INTERVAL_MS;
     config->enable_console = true;
+}
+
+
+static bool read_serial_line_blocking(
+    uart_port_t uart,
+    char *out,
+    size_t out_size
+) {
+    (void)uart;
+
+    if (!out || out_size == 0) return false;
+
+    size_t len = 0;
+    int c;
+
+    while (true) {
+        c = getchar();
+
+        if (c == EOF) {
+            vTaskDelay(pdMS_TO_TICKS(10));
+            continue;
+        }
+
+        if (c == '\r' || c == '\n') {
+            if (len == 0) continue;
+
+            out[len] = '\0';
+            printf("\n");
+            fflush(stdout);
+            return true;
+        }
+
+        if (c == 0x08 || c == 0x7F) {
+            if (len > 0) {
+                len--;
+                printf("\b \b");
+                fflush(stdout);
+            }
+            continue;
+        }
+
+        if (len < out_size - 1) {
+            out[len++] = (char)c;
+
+            // ecoa o caractere digitado
+            putchar(c);
+            fflush(stdout);
+        }
+    }
+}
+
+
+bool fireant_config_read_serial(fireant_config_t *config) {
+    if (!config) return false;
+
+    printf("\n==== FIREANT CONFIG ====\n");
+    printf("Digite os valores.\n\n");
+
+    printf("id: ");
+    fflush(stdout);
+    read_serial_line_blocking(
+        config->console_uart,
+        config->id,
+        sizeof(config->id)
+    );
+
+    printf("server_ip: ");
+    fflush(stdout);
+    read_serial_line_blocking(
+        config->console_uart,
+        config->server_ip,
+        sizeof(config->server_ip)
+    );
+
+    printf("server_port: ");
+    fflush(stdout);
+    read_serial_line_blocking(
+        config->console_uart,
+        config->server_port,
+        sizeof(config->server_port)
+    );
+
+    printf("server_token: ");
+    fflush(stdout);
+    read_serial_line_blocking(
+        config->console_uart,
+        config->server_token,
+        sizeof(config->server_token)
+    );
+
+    printf("wifi_ssid: ");
+    fflush(stdout);
+    read_serial_line_blocking(
+        config->console_uart,
+        config->wifi_ssid,
+        sizeof(config->wifi_ssid)
+    );
+
+    printf("wifi_password: ");
+    fflush(stdout);
+    read_serial_line_blocking(
+        config->console_uart,
+        config->wifi_password,
+        sizeof(config->wifi_password)
+    );
+
+    printf("\nconfig read complete\n");
+
+    return true;
 }
 
 fireant_node_t *fireant_global_node(void) {
@@ -157,8 +298,8 @@ void fireant_node_init(fireant_node_t *node, const fireant_config_t *config) {
     memset(node, 0, sizeof(*node));
     node->config = *config;
 
-    if (node->config.send_interval_ms == 0) node->config.send_interval_ms = FIREANT_SEND_INTERVAL_MS;
-    if (node->config.sync_interval_ms == 0) node->config.sync_interval_ms = FIREANT_SYNC_INTERVAL_MS;
+    if (node->config.send_interval_ms == 0) node->config.send_interval_ms = FIREANT_DEFAULT_SEND_INTERVAL_MS;
+    if (node->config.sync_interval_ms == 0) node->config.sync_interval_ms = FIREANT_DEFAULT_SYNC_INTERVAL_MS;
 
     node->lock = xSemaphoreCreateMutex();
     node->events = xEventGroupCreate();
@@ -465,20 +606,6 @@ static void network_task(void *arg) {
     }
 }
 
-static void console_uart_init(uart_port_t uart) {
-    uart_config_t cfg = {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
-    };
-
-    uart_driver_delete(uart);
-    ESP_ERROR_CHECK(uart_param_config(uart, &cfg));
-    ESP_ERROR_CHECK(uart_driver_install(uart, FIREANT_UART_LINE_SIZE * 4, 0, 0, NULL, 0));
-}
 
 static bool uart_read_command_line(uart_port_t uart, char *out, size_t out_size) {
     static char line[FIREANT_UART_LINE_SIZE];
@@ -578,6 +705,7 @@ static void console_task(void *arg) {
             ESP_LOGI(TAG, "> %s", line);
             apply_command(node, line);
         }
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 

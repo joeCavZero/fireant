@@ -22,8 +22,8 @@
 #define FIREANT_DEFAULT_NODE_PORT "8000"
 #define FIREANT_UART_LINE_SIZE 256
 #define FIREANT_HTTP_BUFFER_SIZE 4096
-#define FIREANT_SYNC_INTERVAL_MS 30000
-#define FIREANT_SEND_INTERVAL_MS 5000
+#define FIREANT_DEFAULT_SYNC_INTERVAL_MS 5000
+#define FIREANT_DEFAULT_SEND_INTERVAL_MS 5000
 #define FIREANT_HTTP_FAIL_BACKOFF_MS 15000
 
 typedef enum {
@@ -80,6 +80,8 @@ typedef struct {
 typedef struct fireant_node fireant_node_t;
 
 void fireant_config_default(fireant_config_t *config);
+
+bool fireant_config_read_serial(fireant_config_t *config);
 
 void fireant_global_init(const fireant_config_t *config);
 void fireant_global_start(void);

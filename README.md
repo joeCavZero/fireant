@@ -35,9 +35,7 @@ Any sensor can be integrated as long as the node reports its metadata and readin
 
 ## Tested Boards
 
-* ESP32 DevKit V1
-* NodeMCU ESP32
-* ESP32-WROOM-32
+* ESP32-WROOM-32 (xx5r69)
 
 ---
 
