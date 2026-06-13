@@ -4,106 +4,89 @@
 
 <h1 align="center">FIREANT</h1>
 
-Fireant is a flexible IoT platform and C library designed to collect, process and visualize data from multiple sensor nodes connected over a network.
+Fireant is a telemetry platform for IoT projects. It connects embedded nodes to
+a central server, dynamically registers their available sensors, and stores
+readings for viewing through a web interface.
 
-The platform allows heterogeneous devices to dynamically register themselves and report sensor data without requiring modifications to the central server.
+The repository contains:
 
----
+- a C library for ESP-IDF projects;
+- a C++ library for Arduino with Ethernet;
+- a FastAPI server with SQLite and a web interface;
+- working examples for ESP32 and Arduino Uno.
+
+## How It Works
+
+1. A device token is created and enabled through the server interface.
+2. The node starts and registers its identity and sensors through
+   `POST /api/sync`.
+3. The node periodically submits readings to `POST /api/receive`.
+4. The server associates readings with registered sensors and stores telemetry.
+5. Authenticated users view the data through the dashboard, history, and network
+   tree pages.
+
+Device routes use their own Bearer tokens. The web interface uses a JWT session
+stored in an HTTP-only cookie.
 
 ## Features
 
-- Dynamic node registration
-- Token-based node authentication
-- Support for heterogeneous sensors
-- Real-time data collection
-- Historical measurements storage
-- Online/offline node monitoring
-- Sensor metadata discovery
-- Web dashboard for visualization and filtering
-- HTTP + JSON communication
+- dynamic node and sensor registration;
+- separate authentication for users and devices;
+- periodic collection from multiple sensors;
+- historical storage in SQLite;
+- dashboard with filters;
+- paginated history and statistics;
+- node and sensor topology view;
+- libraries for ESP-IDF and Arduino;
+- HTTP communication with JSON payloads.
 
----
+## Project Structure
 
-## Supported Sensors
-
-Examples:
-* Luminosity
-
-Any sensor can be integrated as long as the node reports its metadata and readings using the Fireant protocol.
-
----
-
-## Tested Boards
-
-* ESP32-WROOM-32 (xx5r69)
-
----
-
-## Example Node Registration
-
-```json
-{
-  "node_id": "node-01",
-  "token": "abc123",
-  "name": "Laboratory Node",
-  "sensors": [
-    {
-      "sensor_id": "temp-01",
-      "type": "temperature",
-      "category": "environmental",
-      "unit": "celsius"
-    }
-  ]
-}
+```text
+.
+├── arduino/       # Arduino + Ethernet library
+├── espressif/     # ESP-IDF + Wi-Fi library
+├── examples/      # Working library examples
+├── server/        # FastAPI application, web pages, and database
+└── docs/          # Detailed documentation
 ```
 
----
+## Quick Start
 
-## Example Sensor Reading
+To run the server locally:
 
-```json
-{
-  "node_id": "node-01",
-  "timestamp": "2026-06-10T18:00:00",
-  "readings": [
-    {
-      "sensor_id": "temp-01",
-      "value": 28.5
-    }
-  ]
-}
+```bash
+cd server
+python3 -m venv venv
+source venv/bin/activate
+pip install fastapi "uvicorn[standard]" sqlalchemy jinja2 python-multipart
+python seed.py
+./run.sh
 ```
 
----
+The application will be available at `http://localhost:8000`. The seed creates
+the user `admin` with password `admin123`. Change these credentials and
+`JWT_SECRET_KEY` before any real deployment.
 
-## Technology Stack
+After signing in, create a token at `/node_token` and use the same value in the
+device configuration.
 
-### Firmware
+## Documentation
 
-* ESP-IDF
-* C
+- [ESP-IDF](./docs/espressif.md) - Installation, configuration, and library usage
+  for Espressif devices.
+- [Arduino](./docs/arduino.md) - Library usage with Arduino Uno and an Ethernet
+  interface.
+- [Server](./docs/server.md) - Server installation, configuration, architecture,
+  and web interface.
+- [API](./docs/api.md) - Authentication, endpoints, JSON payloads, and device API
+  responses.
 
-### Backend
+## Hardware Used by the Examples
 
-* FastAPI
+- ESP32-WROOM-32 (xx5r69 board), with an LDR on `ADC_CHANNEL_6`;
+- Arduino Uno, a compatible Ethernet shield or module, and an LDR on pin `A0`.
 
-### Database
-
-* SQLite
-
-### Frontend
-
-* HTML
-* CSS
-* JavaScript
-
-### Communication
-
-* HTTP
-* JSON
-
----
-
-## Project Goals
-
-Fireant aims to provide a reusable infrastructure for IoT deployments where new nodes and sensors can be added dynamically without requiring changes to the central monitoring system.
+Other sensors can be used as long as they are registered with an identifier,
+type, and unit. See the relevant library documentation for the input methods
+currently implemented on each platform.
