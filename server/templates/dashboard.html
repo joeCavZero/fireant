@@ -10,29 +10,9 @@
     >
 </head>
 <body>
-<header class="navbar">
-    <a href="/" class="brand">
-        <img
-            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
-            alt="Fireant logo"
-        >
-        <div class="brand-text">
-            <strong>FIREANT</strong>
-            <span>IoT Monitoring Platform</span>
-        </div>
-    </a>
-    <nav class="navbar-actions">
-        <a href="/tree">Network</a>
-        <a href="/telemetry">History</a>
-        <a href="/node_token">Tokens</a>
-        <a href="/me">Account</a>
-        <form action="/logout" method="post">
-            <button type="submit" class="button-primary">Sign Out</button>
-        </form>
-    </nav>
-</header>
+{% include "includes/header.html" %}
 
-<main class="dashboard">
+<main class="dashboard" data-live-page="dashboard">
     <section class="dashboard-heading">
         <div>
             <span class="hero-badge">Dashboard</span>
@@ -284,11 +264,11 @@
         </article>
     </section>
 </main>
-{% if telemetries %}
-    <script id="dashboard-chart-data" type="application/json">
-        {{ chart_readings | tojson }}
-    </script>
-    <script src="{{ url_for('static', path='/js/dashboard.js') }}"></script>
-{% endif %}
+<script id="dashboard-chart-data" type="application/json" data-live-data>
+    {{ chart_readings | tojson }}
+</script>
+{% include "includes/footer.html" %}
+<script src="{{ url_for('static', path='/js/live-page.js') }}"></script>
+<script src="{{ url_for('static', path='/js/dashboard.js') }}"></script>
 </body>
 </html>

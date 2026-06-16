@@ -10,29 +10,9 @@
     >
 </head>
 <body>
-<header class="navbar">
-    <a href="/" class="brand">
-        <img
-            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
-            alt="Fireant logo"
-        >
-        <div class="brand-text">
-            <strong>FIREANT</strong>
-            <span>IoT Monitoring Platform</span>
-        </div>
-    </a>
-    <nav class="navbar-actions">
-        <a href="/dashboard">Dashboard</a>
-        <a href="/tree">Network</a>
-        <a href="/node_token">Tokens</a>
-        <a href="/me">Account</a>
-        <form action="/logout" method="post">
-            <button type="submit" class="button-primary">Sign Out</button>
-        </form>
-    </nav>
-</header>
+{% include "includes/header.html" %}
 
-<main class="dashboard">
+<main class="dashboard" data-live-page="telemetry">
     <section class="dashboard-heading">
         <div>
             <span class="hero-badge">Data explorer</span>
@@ -248,5 +228,7 @@
         </nav>
     </section>
 </main>
+{% include "includes/footer.html" %}
+<script src="{{ url_for('static', path='/js/live-page.js') }}"></script>
 </body>
 </html>

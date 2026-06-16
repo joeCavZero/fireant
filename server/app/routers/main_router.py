@@ -1,5 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import math
+import socket
 import secrets
 from urllib.parse import quote
 
@@ -29,15 +30,11 @@ from app.services.auth_service import authenticate_user
 from app.services.jwt_service import get_current_user, get_current_user_optional
 from app.services.security_service import create_access_token, hash_password
 
-from app.config import (
-    AUTH_COOKIE_NAME,
-    AUTH_COOKIE_SECURE,
-    JWT_EXPIRE_MINUTES,
-    templater,
-)
+from app.config import *
 
 
 main_router = APIRouter()
+
 
 
 def parse_datetime_filter(value: str | None) -> datetime | None:
@@ -61,6 +58,42 @@ def get_inventory(db: Session) -> tuple[list[Node], list[NodeSensor]]:
         .all()
     )
     return nodes, sensors
+
+
+def normalize_datetime(value: datetime | None) -> datetime | None:
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def is_recent(value: datetime | None) -> bool:
+    normalized = normalize_datetime(value)
+    if normalized is None:
+        return False
+    return datetime.now(timezone.utc) - normalized <= NODE_ACTIVE_WINDOW
+
+
+def accepts_node_connection(node: Node) -> bool:
+    try:
+        port = int(node.port)
+    except (TypeError, ValueError):
+        return False
+
+    try:
+        with socket.create_connection((node.ip, port), timeout=0.2):
+            return True
+    except OSError:
+        return False
+
+
+def is_node_connected(node: Node, latest_seen_at: datetime | None) -> bool:
+    return (
+        is_recent(latest_seen_at)
+        or is_recent(node.updated_at)
+        or accepts_node_connection(node)
+    )
 
 
 def render_node_token_form(
@@ -473,6 +506,14 @@ async def network_tree(
     latest_by_sensor: dict[int, Telemetry] = {}
     for telemetry in latest_rows:
         latest_by_sensor.setdefault(telemetry.sensor_id, telemetry)
+    latest_seen_by_node: dict[int, datetime] = {}
+    for sensor in sensors:
+        latest = latest_by_sensor.get(sensor.id)
+        if latest is None:
+            continue
+        current = latest_seen_by_node.get(sensor.node_id)
+        if current is None or latest.created_at > current:
+            latest_seen_by_node[sensor.node_id] = latest.created_at
 
     graph_nodes = [
         {
@@ -486,13 +527,19 @@ async def network_tree(
 
     for node in nodes:
         graph_id = f"node-{node.id}"
+        latest_seen_at = latest_seen_by_node.get(node.id)
+        connected = is_node_connected(node, latest_seen_at)
         graph_nodes.append(
             {
                 "id": graph_id,
                 "label": node.node_id,
                 "kind": "node",
                 "subtitle": f"{node.ip}:{node.port}",
-                "details": f"{len(node.sensors)} sensors",
+                "details": (
+                    f"{len(node.sensors)} sensors · "
+                    f"{'Active' if connected else 'No recent activity'}"
+                ),
+                "connected": connected,
             }
         )
         graph_links.append({"source": "server", "target": graph_id})

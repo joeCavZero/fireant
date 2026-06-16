@@ -23,7 +23,7 @@
         return copyWithFallback(value);
     };
 
-    document.querySelectorAll(".button-copy").forEach(button => {
+    document.querySelectorAll(".token-copy .button-copy").forEach(button => {
         button.addEventListener("click", async () => {
             const token = button
                 .closest(".token-copy")

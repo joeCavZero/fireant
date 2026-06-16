@@ -12,32 +12,7 @@
 </head>
 
 <body>
-
-<header class="navbar">
-    <a href="/" class="brand">
-        <img
-            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
-            alt="Fireant logo"
-        >
-
-        <div class="brand-text">
-            <strong>FIREANT</strong>
-            <span>IoT Monitoring Platform</span>
-        </div>
-    </a>
-
-    <nav class="navbar-actions">
-        <a href="/dashboard">Dashboard</a>
-        <a href="/tree">Network</a>
-        <a href="/telemetry">History</a>
-        <a href="/node_token">Node tokens</a>
-        <form action="/logout" method="post">
-            <button type="submit" class="button-primary">
-                Sign Out
-            </button>
-        </form>
-    </nav>
-</header>
+{% include "includes/header.html" %}
 
 <main>
 
@@ -132,5 +107,6 @@
 
 </main>
 
+{% include "includes/footer.html" %}
 </body>
 </html>

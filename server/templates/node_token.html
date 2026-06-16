@@ -10,29 +10,9 @@
     >
 </head>
 <body>
-<header class="navbar">
-    <a href="/" class="brand">
-        <img
-            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
-            alt="Fireant logo"
-        >
-        <div class="brand-text">
-            <strong>FIREANT</strong>
-            <span>IoT Monitoring Platform</span>
-        </div>
-    </a>
-    <nav class="navbar-actions">
-        <a href="/dashboard">Dashboard</a>
-        <a href="/tree">Network</a>
-        <a href="/telemetry">History</a>
-        <a href="/me">Account</a>
-        <form action="/logout" method="post">
-            <button type="submit" class="button-primary">Sign Out</button>
-        </form>
-    </nav>
-</header>
+{% include "includes/header.html" %}
 
-<main class="dashboard">
+<main class="dashboard" data-live-page="node-token">
     <section class="dashboard-heading">
         <div>
             <span class="hero-badge">Devices</span>
@@ -66,6 +46,7 @@
                                     <button
                                         type="button"
                                         class="button-copy"
+                                        data-copy-value="{{ node_token.token }}"
                                         aria-label="Copy token {{ node_token.id }}"
                                     >
                                         Copy
@@ -117,6 +98,7 @@
         </div>
     </section>
 </main>
-<script src="{{ url_for('static', path='/js/node-tokens.js') }}"></script>
+{% include "includes/footer.html" %}
+<script src="{{ url_for('static', path='/js/live-page.js') }}"></script>
 </body>
 </html>

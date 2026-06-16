@@ -1,9 +1,6 @@
 (() => {
-    const dataElement = document.getElementById("dashboard-chart-data");
-    if (!dataElement) return;
-
-    const readings = JSON.parse(dataElement.textContent);
-    if (!readings.length) return;
+    let renderers = [];
+    let resizeFrame = null;
 
     const colors = [
         "#ff5c35",
@@ -21,7 +18,6 @@
     const textColor = "#9aa7b8";
     const strongTextColor = "#f8fafc";
     const font = "12px Inter, system-ui, sans-serif";
-    const renderers = [];
 
     const groupBy = (items, key) => {
         const groups = new Map();
@@ -110,8 +106,22 @@
         renderer();
     };
 
-    const createTrendCharts = () => {
+    const getReadings = () => {
+        const dataElement = document.getElementById("dashboard-chart-data");
+        if (!dataElement) return [];
+
+        try {
+            return JSON.parse(dataElement.textContent);
+        } catch {
+            return [];
+        }
+    };
+
+    const createTrendCharts = readings => {
         const container = document.getElementById("trend-charts");
+        if (!container) return;
+
+        container.replaceChildren();
         const byUnit = groupBy(readings, item => item.unit || "unitless");
 
         [...byUnit.entries()].forEach(([unit, unitReadings]) => {
@@ -213,8 +223,10 @@
         });
     };
 
-    const drawSensorVolume = () => {
+    const drawSensorVolume = readings => {
         const canvas = document.getElementById("sensor-volume-chart");
+        if (!canvas) return;
+
         const counts = [...groupBy(
             readings,
             item => `${item.node} / ${item.sensor}`
@@ -260,9 +272,11 @@
         });
     };
 
-    const drawNodeShare = () => {
+    const drawNodeShare = readings => {
         const canvas = document.getElementById("node-share-chart");
         const legend = document.getElementById("node-share-legend");
+        if (!canvas || !legend) return;
+
         const counts = [...groupBy(readings, item => item.node)]
             .map(([label, items]) => ({ label, value: items.length }))
             .sort((left, right) => right.value - left.value);
@@ -302,8 +316,10 @@
         });
     };
 
-    const drawActivity = () => {
+    const drawActivity = readings => {
         const canvas = document.getElementById("activity-chart");
+        if (!canvas) return;
+
         const times = readings.map(item => new Date(item.timestamp).getTime());
         const minimumTime = Math.min(...times);
         const maximumTime = Math.max(...times);
@@ -369,16 +385,24 @@
         });
     };
 
-    createTrendCharts();
-    drawSensorVolume();
-    drawNodeShare();
-    drawActivity();
+    const renderDashboard = () => {
+        const readings = getReadings();
+        renderers = [];
+        if (!readings.length) return;
 
-    let resizeFrame = null;
+        createTrendCharts(readings);
+        drawSensorVolume(readings);
+        drawNodeShare(readings);
+        drawActivity(readings);
+    };
+
     window.addEventListener("resize", () => {
         if (resizeFrame) cancelAnimationFrame(resizeFrame);
         resizeFrame = requestAnimationFrame(() => {
             renderers.forEach(renderer => renderer());
         });
     });
+
+    renderDashboard();
+    window.addEventListener("live-page:update", renderDashboard);
 })();

@@ -12,28 +12,7 @@
 </head>
 
 <body>
-
-<header class="navbar">
-    <a href="/" class="brand">
-        <img
-            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
-            alt="Fireant logo"
-        >
-
-        <div class="brand-text">
-            <strong>FIREANT</strong>
-            <span>IoT Monitoring Platform</span>
-        </div>
-    </a>
-
-    <nav class="navbar-actions">
-        {% if current_user %}
-            <a href="/dashboard" class="button-primary">Dashboard</a>
-        {% else %}
-            <a href="/login" class="button-primary">Login</a>
-        {% endif %}
-    </nav>
-</header>
+{% include "includes/header.html" %}
 
 <main>
 
@@ -161,5 +140,6 @@
 
 </main>
 
+{% include "includes/footer.html" %}
 </body>
 </html>

@@ -26,6 +26,8 @@ async def handle_http_exception(
 ):
     if exc.status_code == 404 and exc.detail == "Not Found":
         return RedirectResponse(url="/", status_code=303)
+    if exc.status_code == 401 and "text/html" in request.headers.get("accept", ""):
+        return RedirectResponse(url="/", status_code=303)
     return await http_exception_handler(request, exc)
 
 

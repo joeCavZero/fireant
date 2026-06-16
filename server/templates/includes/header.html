@@ -1,0 +1,55 @@
+<header class="navbar">
+    <a href="/" class="brand">
+        <img
+            src="{{ url_for('static', path='/images/fireant-logo.png') }}"
+            alt="Fireant logo"
+        >
+        <div class="brand-text">
+            <strong>FIREANT</strong>
+            <span>IoT Monitoring Platform</span>
+        </div>
+    </a>
+
+    {% set server_host = server_lan_ip() %}
+    {% set server_port = request.url.port or (443 if request.url.scheme == "https" else 80) %}
+    <div class="server-address" aria-label="Server address">
+        <span>Server</span>
+        <div>
+            <code>{{ server_host }}</code>
+            <button
+                type="button"
+                class="button-copy button-copy-compact"
+                data-copy-value="{{ server_host }}"
+                aria-label="Copy server IP"
+            >
+                Copy IP
+            </button>
+        </div>
+        <div>
+            <code>{{ server_port }}</code>
+            <button
+                type="button"
+                class="button-copy button-copy-compact"
+                data-copy-value="{{ server_port }}"
+                aria-label="Copy server port"
+            >
+                Copy port
+            </button>
+        </div>
+    </div>
+
+    <nav class="navbar-actions">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/tree">Network</a>
+        <a href="/telemetry">History</a>
+        <a href="/node_token">Tokens</a>
+        <a href="/me">Account</a>
+        {% if current_user %}
+            <form action="/logout" method="post">
+                <button type="submit" class="button-primary">Sign Out</button>
+            </form>
+        {% else %}
+            <a href="/login" class="button-primary">Login</a>
+        {% endif %}
+    </nav>
+</header>
