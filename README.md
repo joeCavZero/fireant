@@ -11,9 +11,9 @@ readings for viewing through a web interface.
 The repository contains:
 
 - a C library for ESP-IDF projects;
-- a C++ library for Arduino with Ethernet;
+- a C++ library for Arduino using the Arduino `Ethernet` library;
 - a FastAPI server with SQLite and a web interface;
-- working examples for ESP32 and Arduino Uno.
+- examples for ESP32 and Arduino Uno.
 
 ## How It Works
 
@@ -38,6 +38,8 @@ stored in an HTTP-only cookie.
 - paginated history and statistics;
 - node and sensor topology view;
 - libraries for ESP-IDF and Arduino;
+- ADC, mapped ADC, digital, and custom callback sensors in the embedded
+  libraries;
 - HTTP communication with JSON payloads.
 
 ## Project Structure
@@ -75,8 +77,8 @@ device configuration.
 
 - [ESP-IDF](./docs/espressif.md) - Installation, configuration, and library usage
   for Espressif devices.
-- [Arduino](./docs/arduino.md) - Library usage with Arduino Uno and an Ethernet
-  interface.
+- [Arduino](./docs/arduino.md) - Library usage with Arduino-compatible boards
+  and the Arduino Ethernet stack.
 - [Server](./docs/server.md) - Server installation, configuration, architecture,
   and web interface.
 - [API](./docs/api.md) - Authentication, endpoints, JSON payloads, and device API
@@ -84,7 +86,11 @@ device configuration.
 
 ## Hardware Used by the Examples
 
-- ESP32-WROOM-32 (xx5r69 board)
+- ESP32:
+  - WROOM-32:
+    - xx5r69
+- Arduino:
+  - Uno (not fully tested)
 
 Other sensors can be used as long as they are registered with an identifier,
 type, and unit. See the relevant library documentation for the input methods

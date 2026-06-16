@@ -40,6 +40,7 @@ The application reads these environment variables:
 | `JWT_ALGORITHM` | `HS256` | Algorithm supported by the implementation |
 | `JWT_EXPIRE_MINUTES` | `60` | Session lifetime |
 | `AUTH_COOKIE_SECURE` | `false` | Sends the cookie only over HTTPS when `true` |
+| `FIREANT_SERVER_HOST` | auto-detected | Host/IP shown by templates when available |
 
 For production, define at least a strong secret:
 
@@ -103,7 +104,8 @@ With `ENV=test`, these URLs are available:
 These routes are disabled when `ENV=prod`.
 
 Requests to undefined routes are redirected to `/`. Explicit application and
-device API `404` responses keep their original JSON error instead.
+device API `404` responses keep their original JSON error instead. HTML
+requests that fail user authentication with `401` are redirected to `/`.
 
 ## Web Interface
 
@@ -184,19 +186,23 @@ The dashboard charts use the exact same node, sensor, type, date, and result
 limit filters as the readings table. Time-series charts are separated by unit
 to avoid placing incompatible measurements on the same value scale.
 
+The network tree marks a node as connected when it has recent telemetry, a
+recent node update, or a successful short TCP connection to the node IP and
+stored port. The recent-activity window is currently 5 seconds.
+
 ## Application Structure
 
 ```text
 server/
 ├── app/
 │   ├── models/       # SQLAlchemy models
-│   ├── routers/      # Web interface and device API
+│   ├── routers/      # main_router.py and api_router.py
 │   ├── schemas/      # Pydantic validation
 │   ├── services/     # Authentication, JWTs, and passwords
 │   ├── config.py     # Environment variables
 │   ├── database.py   # Engine and sessions
 │   └── server.py     # FastAPI application setup
-├── static/           # CSS and images
+├── static/           # CSS, images, and JavaScript
 ├── templates/        # Jinja2 templates
 ├── seed.py           # Initial user
 └── run.sh            # Development command

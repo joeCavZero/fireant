@@ -12,6 +12,7 @@ The reference example is
 - Wi-Fi station mode;
 - initial configuration over serial;
 - ADC sensors using the `adc_oneshot` driver;
+- mapped ADC values with optional inversion;
 - digital sensors with an `active_low` option;
 - custom sensors through callbacks;
 - periodic metadata synchronization;
@@ -141,6 +142,26 @@ size_t index = fireant_global_add_adc_sensor(
 The library uses `ADC_UNIT_1`, the default bit width, and 12 dB attenuation. The
 raw ADC reading is converted to `float` before submission.
 
+### Mapped ADC
+
+```c
+fireant_global_add_adc_sensor_mapped(
+    "ldr_percent",
+    "light",
+    "%",
+    ADC_CHANNEL_6,
+    0.0f,
+    4095.0f,
+    0.0f,
+    100.0f,
+    false
+);
+```
+
+The raw reading is clamped to `[raw_min, raw_max]`, mapped to
+`[out_min, out_max]`, and optionally inverted within the output range. The
+repository example uses this form for the LDR.
+
 ### Digital
 
 ```c
@@ -228,9 +249,12 @@ Synchronization submits metadata to `/api/sync`; telemetry is submitted to
 Authorization: Bearer DEVICE_TOKEN
 ```
 
-The `port` field submitted by the ESP-IDF firmware during synchronization is
-currently fixed to `"8000"` by `FIREANT_DEFAULT_NODE_PORT`. Complete payloads
-and validation rules are documented in [API](./api.md).
+The HTTP URL uses `config.server_port`. The `port` field stored for the node
+during synchronization is currently fixed to `"8000"` by
+`FIREANT_DEFAULT_NODE_PORT`, so changing `config.server_port` changes where the
+firmware sends requests but does not change the advertised node port in the sync
+payload. Complete payloads and validation rules are documented in
+[API](./api.md).
 
 ## Limits
 

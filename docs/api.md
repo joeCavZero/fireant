@@ -86,6 +86,7 @@ the token, IP address, and port. New sensors are created, while existing sensor
 types and units are updated.
 
 Synchronization does not remove old sensors that no longer appear in the array.
+The token's `last_used_at` field is updated after a successful synchronization.
 
 ### Success Response
 
@@ -162,7 +163,8 @@ The node and every submitted sensor must have been synchronized first.
 | `sensors[].value` | number | Required; converted and stored as `float` |
 
 The server sets the timestamp when the row is inserted. The API does not accept
-a device-generated timestamp.
+a device-generated timestamp. The token's `last_used_at` field is updated after
+a successful telemetry submission.
 
 ### Success Response
 
