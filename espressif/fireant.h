@@ -44,6 +44,15 @@ typedef struct {
     union {
         struct {
             adc_channel_t channel;
+
+            float raw_min;
+            float raw_max;
+
+            float out_min;
+            float out_max;
+
+            bool invert;
+            bool mapped;
         } analog_adc;
 
         struct {
@@ -91,6 +100,31 @@ size_t fireant_global_add_adc_sensor(
     const char *type,
     const char *unit,
     adc_channel_t channel
+);
+
+size_t fireant_global_add_adc_sensor_mapped(
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel,
+    float raw_min,
+    float raw_max,
+    float out_min,
+    float out_max,
+    bool invert
+);
+
+size_t fireant_node_add_adc_sensor_mapped(
+    fireant_node_t *node,
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel,
+    float raw_min,
+    float raw_max,
+    float out_min,
+    float out_max,
+    bool invert
 );
 
 size_t fireant_global_add_digital_sensor(

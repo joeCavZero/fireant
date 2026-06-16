@@ -15,13 +15,18 @@ void app_main(void) {
 
     fireant_global_init(&config);
 
-    fireant_global_add_adc_sensor(
-        "ldr_1",
+    fireant_global_add_adc_sensor_mapped(
+        "ldr",
         "light",
-        "raw",
-        ADC_CHANNEL_6
+        "%",
+        ADC_CHANNEL_6,
+        0.0f,
+        4095.0f,
+        0.0f,
+        100.0f,
+        false
     );
-
+    
     fireant_global_start();
 
     while (true) {

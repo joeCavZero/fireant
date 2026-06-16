@@ -237,8 +237,38 @@ void fireant_global_exit_config_mode(void) {
     fireant_node_exit_config_mode(&g_node);
 }
 
-size_t fireant_global_add_adc_sensor(const char *id, const char *type, const char *unit, adc_channel_t channel) {
+size_t fireant_global_add_adc_sensor(
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel
+) {
     return fireant_node_add_adc_sensor(&g_node, id, type, unit, channel);
+}
+
+size_t fireant_global_add_adc_sensor_mapped(
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel,
+    float raw_min,
+    float raw_max,
+    float out_min,
+    float out_max,
+    bool invert
+) {
+    return fireant_node_add_adc_sensor_mapped(
+        &g_node,
+        id,
+        type,
+        unit,
+        channel,
+        raw_min,
+        raw_max,
+        out_min,
+        out_max,
+        invert
+    );
 }
 
 size_t fireant_global_add_digital_sensor(const char *id, const char *type, const char *unit, gpio_num_t pin, bool active_low) {
@@ -247,6 +277,22 @@ size_t fireant_global_add_digital_sensor(const char *id, const char *type, const
 
 size_t fireant_global_add_custom_sensor(const char *id, const char *type, const char *unit, fireant_sensor_reader_t read, void *ctx) {
     return fireant_node_add_custom_sensor(&g_node, id, type, unit, read, ctx);
+}
+
+static float fireant_map_float(
+    float x,
+    float in_min,
+    float in_max,
+    float out_min,
+    float out_max
+) {
+    if (in_max == in_min) return out_min;
+
+    if (x < in_min) x = in_min;
+    if (x > in_max) x = in_max;
+
+    return (x - in_min) * (out_max - out_min) /
+           (in_max - in_min) + out_min;
 }
 
 static bool reserve_sensors(fireant_node_t *node, size_t capacity) {
@@ -315,7 +361,39 @@ void fireant_node_init(fireant_node_t *node, const fireant_config_t *config) {
     if (ret != ESP_OK && ret != ESP_ERR_INVALID_STATE) ESP_ERROR_CHECK(ret);
 }
 
-size_t fireant_node_add_adc_sensor(fireant_node_t *node, const char *id, const char *type, const char *unit, adc_channel_t channel) {
+size_t fireant_node_add_adc_sensor(
+    fireant_node_t *node,
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel
+) {
+    return fireant_node_add_adc_sensor_mapped(
+        node,
+        id,
+        type,
+        unit,
+        channel,
+        0.0f,
+        4095.0f,
+        0.0f,
+        4095.0f,
+        false
+    );
+}
+
+size_t fireant_node_add_adc_sensor_mapped(
+    fireant_node_t *node,
+    const char *id,
+    const char *type,
+    const char *unit,
+    adc_channel_t channel,
+    float raw_min,
+    float raw_max,
+    float out_min,
+    float out_max,
+    bool invert
+) {
     if (!node) return (size_t)-1;
 
     init_adc1(node);
@@ -324,14 +402,28 @@ size_t fireant_node_add_adc_sensor(fireant_node_t *node, const char *id, const c
         .bitwidth = ADC_BITWIDTH_DEFAULT,
         .atten = ADC_ATTEN_DB_12,
     };
-    ESP_ERROR_CHECK(adc_oneshot_config_channel(node->adc1_handle, channel, &chan_cfg));
+
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(
+        node->adc1_handle,
+        channel,
+        &chan_cfg
+    ));
 
     fireant_sensor_t sensor = {0};
+
     copy_text(sensor.id, sizeof(sensor.id), id);
     copy_text(sensor.type, sizeof(sensor.type), type);
     copy_text(sensor.unit, sizeof(sensor.unit), unit);
+
     sensor.kind = FIREANT_SENSOR_ANALOG_ADC;
     sensor.input.analog_adc.channel = channel;
+
+    sensor.input.analog_adc.raw_min = raw_min;
+    sensor.input.analog_adc.raw_max = raw_max;
+    sensor.input.analog_adc.out_min = out_min;
+    sensor.input.analog_adc.out_max = out_max;
+    sensor.input.analog_adc.invert = invert;
+    sensor.input.analog_adc.mapped = true;
 
     return add_sensor(node, &sensor);
 }
@@ -447,10 +539,34 @@ static float read_sensor(fireant_node_t *node, fireant_sensor_t *sensor) {
     switch (sensor->kind) {
         case FIREANT_SENSOR_ANALOG_ADC: {
             int raw = 0;
-            if (adc_oneshot_read(node->adc1_handle, sensor->input.analog_adc.channel, &raw) == ESP_OK) {
+
+            if (adc_oneshot_read(
+                    node->adc1_handle,
+                    sensor->input.analog_adc.channel,
+                    &raw
+                ) != ESP_OK) {
+                return sensor->value;
+            }
+
+            if (!sensor->input.analog_adc.mapped) {
                 return (float)raw;
             }
-            return sensor->value;
+
+            float value = fireant_map_float(
+                (float)raw,
+                sensor->input.analog_adc.raw_min,
+                sensor->input.analog_adc.raw_max,
+                sensor->input.analog_adc.out_min,
+                sensor->input.analog_adc.out_max
+            );
+
+            if (sensor->input.analog_adc.invert) {
+                value = sensor->input.analog_adc.out_max -
+                        value +
+                        sensor->input.analog_adc.out_min;
+            }
+
+            return value;
         }
         case FIREANT_SENSOR_DIGITAL: {
             int level = gpio_get_level(sensor->input.digital.pin);
@@ -723,3 +839,4 @@ void fireant_node_start(fireant_node_t *node) {
         xTaskCreate(console_task, "fireant_console", 4096, node, 6, NULL);
     }
 }
+
