@@ -22,7 +22,7 @@ Run these commands from `server/`:
 cd server
 python3 -m venv venv
 source venv/bin/activate
-pip install fastapi "uvicorn[standard]" sqlalchemy jinja2 python-multipart
+pip install -r requirements.txt
 ```
 
 The project does not currently include a pinned dependency file. The packages

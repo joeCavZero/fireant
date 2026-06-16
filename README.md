@@ -42,37 +42,6 @@ stored in an HTTP-only cookie.
   libraries;
 - HTTP communication with JSON payloads.
 
-## Project Structure
-
-```text
-.
-├── arduino/       # Arduino + Ethernet library
-├── espressif/     # ESP-IDF + Wi-Fi library
-├── examples/      # Working library examples
-├── server/        # FastAPI application, web pages, and database
-└── docs/          # Detailed documentation
-```
-
-## Quick Start
-
-To run the server locally:
-
-```bash
-cd server
-python3 -m venv venv
-source venv/bin/activate
-pip install fastapi "uvicorn[standard]" sqlalchemy jinja2 python-multipart
-python seed.py
-./run.sh
-```
-
-The application will be available at `http://localhost:8000`. The seed creates
-the user `admin` with password `admin123`. Change these credentials and
-`JWT_SECRET_KEY` before any real deployment.
-
-After signing in, create a token at `/node_token` and use the same value in the
-device configuration.
-
 ## Documentation
 
 - [ESP-IDF](./docs/espressif.md) - Installation, configuration, and library usage
