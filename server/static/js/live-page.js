@@ -1,7 +1,11 @@
 (() => {
-    const refreshIntervalMs = 5000;
     const liveRoot = document.querySelector("[data-live-page]");
     if (!liveRoot) return;
+
+    const configuredInterval = Number(liveRoot.dataset.refreshInterval);
+    const refreshIntervalMs = Number.isFinite(configuredInterval) && configuredInterval >= 1000
+        ? configuredInterval
+        : 5000;
 
     let refreshing = false;
 
@@ -64,4 +68,7 @@
     };
 
     window.setInterval(refresh, refreshIntervalMs);
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) refresh();
+    });
 })();

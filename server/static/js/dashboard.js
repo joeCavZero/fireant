@@ -106,6 +106,16 @@
         renderer();
     };
 
+    const roundedRect = (context, x, y, width, height, radius = 0) => {
+        if (typeof context.roundRect === "function") {
+            context.roundRect(x, y, width, height, radius);
+            return;
+        }
+
+        // Older browsers and embedded WebViews don't implement roundRect.
+        context.rect(x, y, width, height);
+    };
+
     const getReadings = () => {
         const dataElement = document.getElementById("dashboard-chart-data");
         if (!dataElement) return [];
@@ -258,11 +268,11 @@
                 gradient.addColorStop(1, "#ff9a62");
                 context.fillStyle = "rgba(154, 167, 184, 0.1)";
                 context.beginPath();
-                context.roundRect(left, y, availableWidth, rowHeight, 7);
+                roundedRect(context, left, y, availableWidth, rowHeight, 7);
                 context.fill();
                 context.fillStyle = gradient;
                 context.beginPath();
-                context.roundRect(left, y, Math.max(3, barWidth), rowHeight, 7);
+                roundedRect(context, left, y, Math.max(3, barWidth), rowHeight, 7);
                 context.fill();
 
                 context.fillStyle = strongTextColor;
@@ -362,7 +372,8 @@
                 gradient.addColorStop(1, "rgba(255, 92, 53, 0.25)");
                 context.fillStyle = gradient;
                 context.beginPath();
-                context.roundRect(
+                roundedRect(
+                    context,
                     x,
                     y,
                     Math.max(1, barWidth - gap),

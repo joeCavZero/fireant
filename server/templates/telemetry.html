@@ -12,7 +12,11 @@
 <body>
 {% include "includes/header.html" %}
 
-<main class="dashboard" data-live-page="telemetry">
+<main
+    class="dashboard"
+    data-live-page="telemetry"
+    data-refresh-interval="5000"
+>
     <section class="dashboard-heading">
         <div>
             <span class="hero-badge">Data explorer</span>
@@ -229,6 +233,6 @@
     </section>
 </main>
 {% include "includes/footer.html" %}
-<script src="{{ url_for('static', path='/js/live-page.js') }}"></script>
+<script src="{{ url_for('static', path='/js/live-page.js') }}?v=2"></script>
 </body>
 </html>

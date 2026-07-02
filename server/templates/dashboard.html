@@ -12,7 +12,11 @@
 <body>
 {% include "includes/header.html" %}
 
-<main class="dashboard" data-live-page="dashboard">
+<main
+    class="dashboard"
+    data-live-page="dashboard"
+    data-refresh-interval="5000"
+>
     <section class="dashboard-heading">
         <div>
             <span class="hero-badge">Dashboard</span>
@@ -268,7 +272,7 @@
     {{ chart_readings | tojson }}
 </script>
 {% include "includes/footer.html" %}
-<script src="{{ url_for('static', path='/js/live-page.js') }}"></script>
-<script src="{{ url_for('static', path='/js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', path='/js/live-page.js') }}?v=2"></script>
+<script src="{{ url_for('static', path='/js/dashboard.js') }}?v=2"></script>
 </body>
 </html>
